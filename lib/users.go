@@ -9,7 +9,7 @@ import (
 )
 
 // ListUsers will return all JumpCLoud users
-func ListUsers() {
+func ListUsers(attributes []string) {
 	// Grab all system users (with their tags if this is a Tags org):
 	userList, err := apiClientV1.GetSystemUsers(!isGroups)
 	if err != nil {
@@ -28,7 +28,9 @@ func ListUsers() {
 		"PasswordExpired",
 	}
 
-	renderTable(header, userListToString(userList))
+	header = append(header, attributes...)
+
+	renderTable(header, userListToString(userList, attributes))
 
 }
 
@@ -44,7 +46,7 @@ func UserAttributeMatches(userName, attributeName, attributeValue string) (bool,
 		}
 	}
 
-	return false, fmt.Errorf("attribute %s not found", attributeName)
+	return false, fmt.Errorf("attribute not found: %s", attributeName)
 
 }
 
@@ -66,6 +68,74 @@ func UserAttributes(userName string) error {
 	return nil
 }
 
+// GetUserAttribute will return the attribute value for user
+func GetUserAttribute(userName, key string) (attr string, err error) {
+	user, err := getUserByName(userName)
+	if err != nil {
+		return attr, err
+	}
+
+	for _, attribute := range user.Attributes {
+		if attribute.Name == key {
+			attr = attribute.Value
+			continue
+		}
+	}
+	if attr == "" {
+		return attr, fmt.Errorf("attribute not found: %s", key)
+	}
+	return
+}
+
+// DeleteUserAttribute will delete a user attribute
+func DeleteUserAttribute(userName, key string) (err error) {
+	user, err := getUserByName(userName)
+	if err != nil {
+		return
+	}
+
+	for i, attribute := range user.Attributes {
+		if attribute.Name == key {
+
+			copy(user.Attributes[i:], user.Attributes[i+1:])                  // Shift a[i+1:] left one index.
+			user.Attributes[len(user.Attributes)-1] = jcapi.JCUserAttribute{} // Erase last element (write zero value).
+			user.Attributes = user.Attributes[:len(user.Attributes)-1]        // Truncate slice.
+
+			continue
+		}
+	}
+	_, err = apiClientV1.AddUpdateUser(jcapi.Update, user)
+	return err
+}
+
+// SetUserAttribute will set attribute value for a user
+func SetUserAttribute(userName, key, value string) (err error) {
+	user, err := getUserByName(userName)
+	if err != nil {
+		return err
+	}
+
+	var attrExists bool
+	for _, attribute := range user.Attributes {
+		if attribute.Name == key {
+			attribute.Value = value
+			attrExists = true
+			continue
+		}
+	}
+
+	if !attrExists {
+		user.Attributes = append(user.Attributes, jcapi.JCUserAttribute{
+			Name:  key,
+			Value: value,
+		})
+	}
+
+	_, err = apiClientV1.AddUpdateUser(jcapi.Update, user)
+	return err
+
+}
+
 func getUserByName(userName string) (jcapi.JCUser, error) {
 	userList, err := apiClientV1.GetSystemUsers(!isGroups)
 	if err != nil {
@@ -79,22 +149,35 @@ func getUserByName(userName string) (jcapi.JCUser, error) {
 	return jcapi.JCUser{}, fmt.Errorf("unable to find jumpcloud user with name %s", userName)
 }
 
-func userListToString(userList []jcapi.JCUser) (userListString [][]string) {
+func userListToString(userList []jcapi.JCUser, attributes []string) (userListString [][]string) {
 	for _, user := range userList {
-		// for _, userAttributes := range user.Attributes {
-		// 	fmt.Printf("%s: %s: %s\n", user.UserName, userAttributes.Name, userAttributes.Value)
-		// }
-		userListString = append(userListString,
-			[]string{user.Id,
-				user.UserName,
-				user.FirstName,
-				user.LastName,
-				user.Email,
-				user.Uid,
-				user.Gid,
-				fmt.Sprintf("%t", user.Activated),
-				fmt.Sprintf("%t", user.PasswordExpired),
-			})
+
+		values := []string{user.Id,
+			user.UserName,
+			user.FirstName,
+			user.LastName,
+			user.Email,
+			user.Uid,
+			user.Gid,
+			fmt.Sprintf("%t", user.Activated),
+			fmt.Sprintf("%t", user.PasswordExpired),
+		}
+
+		for _, attributeName := range attributes {
+			values = append(values, userAttribute(user, attributeName))
+		}
+
+		userListString = append(userListString, values)
 	}
+
 	return userListString
+}
+
+func userAttribute(user jcapi.JCUser, attributeName string) string {
+	for _, attribute := range user.Attributes {
+		if attribute.Name == attributeName {
+			return attribute.Value
+		}
+	}
+	return ""
 }
