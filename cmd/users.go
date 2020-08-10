@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	userName, attributeName, attributeValue string
-	attributes                              []string
+	userName string
 )
+
 var userCmd = &cobra.Command{
 	Use:   "user",
 	Short: "interact with JumpCloud users",
@@ -24,7 +24,7 @@ var userListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "list jumpcloud users",
 	Run: func(cmd *cobra.Command, args []string) {
-		jc.ListUsers(attributes)
+		jc.ListUsers(attributes, query, output)
 	},
 }
 

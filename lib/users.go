@@ -9,28 +9,14 @@ import (
 )
 
 // ListUsers will return all JumpCLoud users
-func ListUsers(attributes []string) {
+func ListUsers(attributes []string, query, outputFormat string) {
 	// Grab all system users (with their tags if this is a Tags org):
 	userList, err := apiClientV1.GetSystemUsers(!isGroups)
 	if err != nil {
 		log.Fatalf("Could not read system users, err='%s'\n", err)
 	}
 
-	header := []string{
-		"Id",
-		"UserName",
-		"FirstName",
-		"LastName",
-		"Email",
-		"Uid",
-		"Gid",
-		"Activated",
-		"PasswordExpired",
-	}
-
-	header = append(header, attributes...)
-
-	renderTable(header, userListToString(userList, attributes))
+	outputData(outputFormat, query, userList)
 
 }
 
@@ -63,8 +49,7 @@ func UserAttributes(userName string) error {
 		data = append(data, attribute.Value)
 	}
 
-	renderTable(header, [][]string{data})
-
+	outputData("table", "[].attributes[]", []jcapi.JCUser{user})
 	return nil
 }
 
@@ -152,7 +137,8 @@ func getUserByName(userName string) (jcapi.JCUser, error) {
 func userListToString(userList []jcapi.JCUser, attributes []string) (userListString [][]string) {
 	for _, user := range userList {
 
-		values := []string{user.Id,
+		values := []string{
+			user.Id,
 			user.UserName,
 			user.FirstName,
 			user.LastName,

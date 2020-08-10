@@ -42,7 +42,8 @@ I've only populated API methods as I've needed them but will add more over time.
 
 List JumpCloud users
 
-    jc user list
+    jc user list --output table \
+      --query "[].{Id: _id, UserName: username, FirstName: firstname, LastName: lastname, Email: email, MAC: attributes[?name == 'hwaddr'] | [0].value}"
 
 List attributes for JumpCloud user
 
@@ -51,3 +52,13 @@ List attributes for JumpCloud user
 Check for matching attributes
 
     jc user attribute-matches --user <username --key <attribute name> --value <attribute match>
+
+List Tables
+
+    jc group list --query "[?type == 'user_group'].{ID: id, Name: name}" --output table
+
+List Users in Group
+
+    jc group list-members --id $(jc group list --query "[?name == 'administrator'].{ID: id}" --output csv) --output table --query '[].{Email: email, Userame: username, FirstName: firstname, LastName: lastname}'
+
+    jc group list-members --id $(jc group list --query "[?name == 'administrator'].{ID: id}") --output json --query "[].{Email: email, MAC: attributes[?name == 'hwaddr'].value}"

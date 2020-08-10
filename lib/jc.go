@@ -7,15 +7,15 @@ import (
 
 	"github.com/TheJumpCloud/jcapi"
 	jcapiv2 "github.com/TheJumpCloud/jcapi-go/v2"
-	"github.com/olekukonko/tablewriter"
 )
 
 var (
-	apiURL      = config("JUMPCLOUD_API_URL", "https://console.jumpcloud.com/api")
-	apiKey      = config("JUMPCLOUD_API_KEY", "")
-	apiClientV1 = jcapi.NewJCAPI(apiKey, apiURL)
-	apiClientV2 *jcapiv2.APIClient
-	isGroups    bool
+	apiURL          = config("JUMPCLOUD_API_URL", "https://console.jumpcloud.com/api")
+	apiKey          = config("JUMPCLOUD_API_KEY", "")
+	apiClientV1     = jcapi.NewJCAPI(apiKey, apiURL)
+	apiClientV2     *jcapiv2.APIClient
+	apiClientV2Auth context.Context
+	isGroups        bool
 )
 
 func init() {
@@ -25,6 +25,12 @@ func init() {
 	if apiKey == "" {
 		log.Fatal("Environment variable JUMPCLOUD_API_KEY not set")
 	}
+
+	// set up the API key via context:
+	apiClientV2Auth = context.WithValue(context.TODO(), jcapiv2.ContextAPIKey, jcapiv2.APIKey{
+		Key: apiKey,
+	})
+
 	isGroups, err = isGroupsOrg(apiURL, apiKey)
 	if err != nil {
 		log.Fatalf("Could not determine your org type, err='%s'\n", err)
@@ -34,6 +40,7 @@ func init() {
 	if isGroups {
 		apiClientV2 = jcapiv2.NewAPIClient(jcapiv2.NewConfiguration())
 		apiClientV2.ChangeBasePath(apiURL + "/v2")
+
 	}
 }
 
@@ -42,18 +49,13 @@ func isGroupsOrg(urlBase string, apiKey string) (bool, error) {
 	client := jcapiv2.NewAPIClient(jcapiv2.NewConfiguration())
 	client.ChangeBasePath(urlBase + "/v2")
 
-	// set up the API key via context:
-	auth := context.WithValue(context.TODO(), jcapiv2.ContextAPIKey, jcapiv2.APIKey{
-		Key: apiKey,
-	})
-
 	// set up optional parameters:
 	optionals := map[string]interface{}{
 		"limit": int32(1), // limit the query to return 1 item
 	}
 	// in order to check for groups support, we just query for the list of User groups
 	// (we just ask to retrieve 1) and check the response status code:
-	_, res, err := client.UserGroupsApi.GroupsUserList(auth, "application/json", "application/json", optionals)
+	_, res, err := client.UserGroupsApi.GroupsUserList(apiClientV2Auth, "application/json", "application/json", optionals)
 
 	// check if we're using the API v1:
 	// we need to explicitly check for 404, since GroupsUserList will also return a json
@@ -74,15 +76,6 @@ func isGroupsOrg(urlBase string, apiKey string) (bool, error) {
 	}
 
 	return false, nil
-}
-
-func renderTable(header []string, data [][]string) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader(header)
-	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-	table.SetCenterSeparator("|")
-	table.AppendBulk(data) // Add Bulk Data
-	table.Render()
 }
 
 func config(s, e string) string {
