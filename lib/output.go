@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 
 	"github.com/jmespath/go-jmespath"
 	"github.com/olekukonko/tablewriter"
@@ -108,7 +109,7 @@ func makeHeader(mymap map[string]string) []string {
 
 func makeTableData(mymap []map[string]string) (header []string, records [][]string) {
 	header = makeHeader(mymap[0])
-
+	sort.Strings(header)
 	for _, record := range mymap {
 		var row []string
 		sum := 0
