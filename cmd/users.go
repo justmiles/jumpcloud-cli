@@ -88,6 +88,17 @@ var deleteAttribute = &cobra.Command{
 	},
 }
 
+var setUserProperties = &cobra.Command{
+	Use:   "set-user-properties",
+	Short: "...",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := jc.SetUserProperties(userName, properties)
+		if err != nil {
+			log.Fatal(err)
+		}
+	},
+}
+
 func init() {
 
 	// user-list
@@ -119,13 +130,19 @@ func init() {
 	cobra.MarkFlagRequired(setAttribute.PersistentFlags(), "key")
 	cobra.MarkFlagRequired(setAttribute.PersistentFlags(), "value")
 
+	// property-set
+	setUserProperties.PersistentFlags().StringVarP(&userName, "username", "u", "", "username")
+	setUserProperties.PersistentFlags().StringArrayVarP(&properties, "property", "p", properties, "key value property to set - e.g. -p activated=true -p enable_managed_uid=false")
+	cobra.MarkFlagRequired(setUserProperties.PersistentFlags(), "username")
+	cobra.MarkFlagRequired(setUserProperties.PersistentFlags(), "property")
+
 	// attribute-delete
 	deleteAttribute.PersistentFlags().StringVarP(&userName, "username", "u", "", "username")
 	deleteAttribute.PersistentFlags().StringVarP(&attributeName, "key", "k", "", "attribute name")
 	cobra.MarkFlagRequired(deleteAttribute.PersistentFlags(), "username")
 	cobra.MarkFlagRequired(deleteAttribute.PersistentFlags(), "key")
 
-	userCmd.AddCommand(userListCmd, userAttributesCmd, attributeMatchesCmd, getAttribute, setAttribute, deleteAttribute)
+	userCmd.AddCommand(userListCmd, userAttributesCmd, attributeMatchesCmd, getAttribute, setAttribute, deleteAttribute, setUserProperties)
 	rootCmd.AddCommand(userCmd)
 
 }

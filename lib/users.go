@@ -3,6 +3,8 @@ package jc
 import (
 	"fmt"
 	"log"
+	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/TheJumpCloud/jcapi"
@@ -114,6 +116,47 @@ func SetUserAttribute(userName, key, value string) (err error) {
 			Name:  key,
 			Value: value,
 		})
+	}
+
+	_, err = apiClientV1.AddUpdateUser(jcapi.Update, user)
+	return err
+
+}
+
+// SetUserProperties will set the property value for a user
+func SetUserProperties(userName string, properties []string) (err error) {
+	user, err := getUserByName(userName)
+	if err != nil {
+		return err
+	}
+
+	s := reflect.ValueOf(&user).Elem()
+	t := reflect.TypeOf(user)
+
+	for _, p := range properties {
+		ss := strings.SplitN(p, "=", 2)
+		propertyName, propertyValue := ss[0], ss[1]
+
+		// Iterate over all available fields and read the tag value
+		for i := 0; i < t.NumField(); i++ {
+
+			// Get the field, returns https://golang.org/pkg/reflect/#StructField
+			field := t.Field(i)
+
+			// Get the field tag value
+			tag := field.Tag.Get("json")
+
+			if tag == propertyName {
+				f := s.FieldByName(field.Name)
+				switch field.Type.Kind() {
+				case reflect.Bool:
+					b1, _ := strconv.ParseBool(propertyValue)
+					f.SetBool(b1)
+				case reflect.String:
+					f.SetString(propertyValue)
+				}
+			}
+		}
 	}
 
 	_, err = apiClientV1.AddUpdateUser(jcapi.Update, user)
