@@ -38,6 +38,20 @@ I've only populated API methods as I've needed them but will add more over time.
 
     Use "jc user [command] --help" for more information about a command.
 
+## Run A Command
+
+    CRUD - create/read/update/delete
+    jc command list|create|d  --name --
+
+
+    jc command execute --system <x> --group <x> --command-name "" --adoc-command "dir"
+
+    > ......
+
+    dir
+
+
+
 ## Examples
 
 List JumpCloud users
@@ -62,3 +76,8 @@ List Users in Group
     jc group list-members --id $(jc group list --query "[?name == 'administrator'].{ID: id}" --output csv) --output table --query '[].{Email: email, Userame: username, FirstName: firstname, LastName: lastname}'
 
     jc group list-members --id $(jc group list --query "[?name == 'administrator'].{ID: id}") --output json --query "[].{Email: email, MAC: attributes[?name == 'hwaddr'].value}"
+
+## Reference
+
+- [JumpCloud V1 Documentation](https://docs.jumpcloud.com/1.0)
+- [JumpCloud V2 Documentation](https://docs.jumpcloud.com/2.0)
