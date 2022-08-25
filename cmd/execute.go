@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	command, system string
-	timeout         int
+	command, system, commandType string
+	timeout                      int
 )
 
 // user list subcommand
@@ -23,7 +23,7 @@ var executeCMD = &cobra.Command{
 
 		var exitCode = 0
 
-		commandResults, err := jc.ExecuteCommandAgainstSystem(system, command, timeout)
+		commandResults, err := jc.ExecuteCommandAgainstSystem(system, command, commandType, timeout)
 
 		for _, commandResult := range commandResults {
 
@@ -51,6 +51,7 @@ func init() {
 	// execute
 	executeCMD.PersistentFlags().StringVarP(&command, "command", "c", "", "command to execute against the remote machine(s)")
 	executeCMD.PersistentFlags().StringVarP(&system, "system", "s", "", "system to target with this command")
+	executeCMD.PersistentFlags().StringVar(&commandType, "command-type", "linux", "type of command: linux/windows/mac")
 	executeCMD.PersistentFlags().IntVarP(&timeout, "timeout", "t", 0, "timeout after seconds")
 
 	rootCmd.AddCommand(executeCMD)

@@ -15,24 +15,25 @@ func init() {
 }
 
 // ListGroups will return all JumpCLoud Groups
-func ExecuteCommandAgainstSystem(system, command string, timeout int) (commandResults []jcapi.JCCommandResult, err error) {
+func ExecuteCommandAgainstSystem(system, command, commandType string, timeout int) (commandResults []jcapi.JCCommandResult, err error) {
 	var options = make(map[string]interface{})
 	options["limit"] = int32(100)
 
 	// Create the command
 
 	var jcCommand = jcapi.JCCommand{
-		Name:       fmt.Sprintf("jc-cli-%s", randomId()),
-		Command:    command,
-		User:       jcapi.COMMAND_ROOT_USER,
-		LaunchType: "manual",
-		Schedule:   "immediate",
-		Timeout:    fmt.Sprintf("%v", timeout),
-		ListensTo:  "",
-		Trigger:    "",
-		Sudo:       false,
-		Skip:       0,
-		Limit:      10,
+		Name:        fmt.Sprintf("jc-cli-%s", randomId()),
+		Command:     command,
+		User:        jcapi.COMMAND_ROOT_USER,
+		CommandType: commandType,
+		LaunchType:  "manual",
+		Schedule:    "immediate",
+		Timeout:     fmt.Sprintf("%v", timeout),
+		ListensTo:   "",
+		Trigger:     "",
+		Sudo:        false,
+		Skip:        0,
+		Limit:       10,
 	}
 
 	jcCommand, err = apiClientV1.AddUpdateCommand(jcapi.Insert, jcCommand)
