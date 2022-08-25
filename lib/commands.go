@@ -15,7 +15,7 @@ func init() {
 }
 
 // ListGroups will return all JumpCLoud Groups
-func ExecuteCommandAgainstSystem(system, command string) (commandResults []jcapi.JCCommandResult, err error) {
+func ExecuteCommandAgainstSystem(system, command string, timeout int) (commandResults []jcapi.JCCommandResult, err error) {
 	var options = make(map[string]interface{})
 	options["limit"] = int32(100)
 
@@ -27,7 +27,7 @@ func ExecuteCommandAgainstSystem(system, command string) (commandResults []jcapi
 		User:       jcapi.COMMAND_ROOT_USER,
 		LaunchType: "manual",
 		Schedule:   "immediate",
-		Timeout:    "0", // TODO: support timeout from a flag
+		Timeout:    fmt.Sprintf("%v", timeout),
 		ListensTo:  "",
 		Trigger:    "",
 		Sudo:       false,
