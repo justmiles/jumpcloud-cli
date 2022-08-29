@@ -2,7 +2,9 @@ package jc
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/TheJumpCloud/jcapi"
@@ -19,8 +21,16 @@ func ExecuteCommandAgainstSystem(system, command, commandType string, timeout in
 	var options = make(map[string]interface{})
 	options["limit"] = int32(100)
 
-	// Create the command
+	// if command is a file, then read the contents of the file
+	if _, err := os.Stat(command); err == nil {
+		comandByte, err := ioutil.ReadFile(command)
+		if err != nil {
+			return nil, fmt.Errorf("Could not read from file %s: '%s'\n", command, err)
+		}
+		command = string(comandByte)
+	}
 
+	// Create the command
 	var jcCommand = jcapi.JCCommand{
 		Name:        fmt.Sprintf("jc-cli-%s", randomId()),
 		Command:     command,
@@ -32,6 +42,7 @@ func ExecuteCommandAgainstSystem(system, command, commandType string, timeout in
 		ListensTo:   "",
 		Trigger:     "",
 		Sudo:        false,
+		Shell:       "shell",
 		Skip:        0,
 		Limit:       10,
 	}
@@ -65,6 +76,7 @@ func ExecuteCommandAgainstSystem(system, command, commandType string, timeout in
 
 	// get the command results
 	for {
+		time.Sleep(10 * time.Second) // TODO: add some sort of exponential backoff to prevent rate limits
 
 		results, err := apiClientV1.GetCommandResultsByName(jcCommand.Name)
 		if err != nil {
@@ -83,9 +95,6 @@ func ExecuteCommandAgainstSystem(system, command, commandType string, timeout in
 		if len(results) > 0 {
 			break
 		}
-
-		time.Sleep(10 * time.Second) // TODO: add some sort of exponential backoff to prevent rate limits
-
 	}
 
 	// TODO: Delete the command
