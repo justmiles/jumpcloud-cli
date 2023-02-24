@@ -11,6 +11,6 @@ require (
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/spf13/cobra v0.0.5
 	github.com/yukithm/json2csv v0.1.1
-	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 )
