@@ -50,6 +50,10 @@ func ExecuteCommandAgainstSystem(system, command, commandType string, timeout in
 		jcCommand.Shell = "shell"
 	}
 
+	if commandType == "windows" {
+		jcCommand.Shell = "powershell"
+	}
+
 	jcCommand, err = apiClientV1.AddUpdateCommand(jcapi.Insert, jcCommand)
 	if err != nil {
 		return nil, fmt.Errorf("Could not add/update command, err='%s'\n", err)
