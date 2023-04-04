@@ -42,9 +42,12 @@ func ExecuteCommandAgainstSystem(system, command, commandType string, timeout in
 		ListensTo:   "",
 		Trigger:     "",
 		Sudo:        false,
-		Shell:       "shell",
 		Skip:        0,
 		Limit:       10,
+	}
+
+	if commandType == "linux" || commandType == "mac" {
+		jcCommand.Shell = "shell"
 	}
 
 	jcCommand, err = apiClientV1.AddUpdateCommand(jcapi.Insert, jcCommand)
